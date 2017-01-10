@@ -44,8 +44,13 @@ public class Client
     ObjectInputStream inObject;
 
     public Client(JSF31KochFractalFX applicatie)
-    {
+    {        
         this.applicatie = applicatie;
+        Runnable run = new Runnable()
+        {
+            @Override
+            public void run()
+            {
         try
         {
             applicatie.clearKochPanel();
@@ -60,6 +65,10 @@ public class Client
         {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
+           }
+        };
+        Thread thread = new Thread(run);
+        thread.start();
     }
 
     public void draw()
@@ -74,7 +83,7 @@ public class Client
 
     public void leesInEenKeer()
     {
-        Runnable socketThread = new Runnable()
+        Runnable run = new Runnable()
         {
             @Override
             public void run()
@@ -111,13 +120,13 @@ public class Client
                 }
             }
         };
-        Thread thread = new Thread(socketThread);
+        Thread thread = new Thread(run);
         thread.start();
     }
 
     public void tekenPerEdge()
     {
-        Runnable socketThread = new Runnable()
+        Runnable run = new Runnable()
         {
             @Override
             public void run()
@@ -153,7 +162,7 @@ public class Client
 
             }
         };
-        Thread thread = new Thread(socketThread);
+        Thread thread = new Thread(run);
         thread.start();
     }
 }

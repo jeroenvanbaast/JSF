@@ -17,6 +17,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,7 +26,7 @@ import java.util.logging.Logger;
  * @author Jeroen
  */
 public class Server {
-    
+
     private int poort = 4444;
     private ServerSocket serverSocket;
     private Socket clientSocket;
@@ -33,71 +34,77 @@ public class Server {
     private KochManager kochManager = new KochManager();
     private int level;
     private int currentlevel;
-    
-    public Server() 
-    {
+    private DataInputStream in;
+    private ObjectOutputStream outObject;
+
+    public Server() {
         //stuurPerEdge();
         stuurInEenKeer();
+
+
     }
-    
-    public void stuurPerEdge()
-    {
+
+    public void stuurPerEdge() {
         try {
             serverSocket = new ServerSocket(poort, 0, InetAddress.getByName(null));
-            System.out.println("Server wacht tot client is gestart");
             clientSocket = serverSocket.accept();
-            System.out.println("Client is gestart");
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-          //  DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
             ObjectOutputStream outObject = new ObjectOutputStream(clientSocket.getOutputStream());
-            while(!klaar)
-            {
+            while (!klaar) {
                 level = in.readInt();
-                if(level != currentlevel)
-                {     
-                currentlevel = level;   
-                System.out.println(level);
-                kochManager.changeLevel(level);
-                for(Edge e :kochManager.getEdges())
-                {
-                    outObject.writeObject(e);
+                if (level != currentlevel) {
+                    currentlevel = level;
+                    System.out.println(level);
+                    kochManager.changeLevel(level);
+                    for (Edge e : kochManager.getEdges()) {
+                        outObject.writeObject(e);
+                    }
+                    System.out.println("Alles weggeschreven");
+                    //klaar = true;
                 }
-                System.out.println("Alles weggeschreven");
-                //klaar = true;
-                }
-                
+
             }
         } catch (IOException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
-        }   
+        }
     }
-    
-    public void stuurInEenKeer()
+
+    public void stuurInEenKeer() 
     {
         try {
             serverSocket = new ServerSocket(poort, 0, InetAddress.getByName(null));
-            System.out.println("Server wacht tot client is gestart");
             clientSocket = serverSocket.accept();
-            System.out.println("Client is gestart");
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-          //  DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
             ObjectOutputStream outObject = new ObjectOutputStream(clientSocket.getOutputStream());
-            while(!klaar)
+            while (!klaar) {
+            Runnable run = new Runnable()
             {
-                level = in.readInt();
-                if(level != currentlevel)
-                {     
-                currentlevel = level;   
-                System.out.println(level);
-                kochManager.changeLevel(level);               
-                outObject.writeObject(kochManager.getEdges());
-                System.out.println("Alles weggeschreven");
-                //klaar = true;
+            @Override
+            public void run()
+            {
+                try {
+                    level = in.readInt();
+                    if (level != currentlevel) {
+                        currentlevel = level;
+                        System.out.println(level);
+                        kochManager.changeLevel(level);
+                        outObject.writeObject(kochManager.getEdges());
+                        System.out.println("Alles weggeschreven");
+                        klaar = true;
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                
+                }
+             };
+            Thread thread = new Thread(run);
+            thread.start();
+
             }
-        } catch (IOException ex) {
+            } catch (IOException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
-        }   
+            }
     }
+    
+    
 }
