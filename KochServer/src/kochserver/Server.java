@@ -38,9 +38,12 @@ public class Server {
     private ObjectOutputStream outObject;
 
     public Server() {
+        
+        while(true)
+        {
         //stuurPerEdge();
         stuurInEenKeer();
-
+        }
 
     }
 
@@ -48,8 +51,8 @@ public class Server {
         try {
             serverSocket = new ServerSocket(poort, 0, InetAddress.getByName(null));
             clientSocket = serverSocket.accept();
-            DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-            ObjectOutputStream outObject = new ObjectOutputStream(clientSocket.getOutputStream());
+            in = new DataInputStream(clientSocket.getInputStream());
+            outObject = new ObjectOutputStream(clientSocket.getOutputStream());
             while (!klaar) {
                 level = in.readInt();
                 if (level != currentlevel) {
@@ -73,36 +76,45 @@ public class Server {
     {
         try {
             serverSocket = new ServerSocket(poort, 0, InetAddress.getByName(null));
-            clientSocket = serverSocket.accept();
-            DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-            ObjectOutputStream outObject = new ObjectOutputStream(clientSocket.getOutputStream());
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+        }
             while (!klaar) {
-            Runnable run = new Runnable()
-            {
+            try {
+                clientSocket = serverSocket.accept();
+            } catch (IOException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            }
+                Runnable run = new Runnable()
+        {
             @Override
             public void run()
             {
-                try {
-                    level = in.readInt();
-                    if (level != currentlevel) {
-                        currentlevel = level;
-                        System.out.println(level);
-                        kochManager.changeLevel(level);
-                        outObject.writeObject(kochManager.getEdges());
-                        System.out.println("Alles weggeschreven");
-                        klaar = true;
-                    }
+                try {                    
+                    
+                    in = new DataInputStream(clientSocket.getInputStream());
+                    outObject = new ObjectOutputStream(clientSocket.getOutputStream());
+                        while(true)
+                        {
+                            level = in.readInt();
+                            currentlevel = level;
+                            System.out.println(level);
+                            kochManager.changeLevel(level);
+                            outObject.writeObject(kochManager.getEdges());
+                            System.out.println("Alles weggeschreven");
+                            klaar = true;
+                        }
+                } catch (UnknownHostException ex) {
+                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (IOException ex) {
                     Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                }
-             };
-            Thread thread = new Thread(run);
-            thread.start();
-
-            }
-            } catch (IOException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                }}
+        };
+        Thread thread = new Thread(run);
+        thread.start();
+                
             }
     }
     
